@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+		 xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
+		 xmlns:iis="http://schemas.microsoft.com/wix/IIsExtension"
+		 >
+	<Fragment>
+		<!--Default Web Site Reference-->
+		<Component Id="DefaultWebSiteComponent" Guid="384a14d8-0f44-49ca-bef5-86e9271d1e0f"
+							 Directory="WWWMain" KeyPath="yes" Permanent="yes">
+			<iis:WebSite Id="DefaultWebSite" Description="Default Web Site" Directory="WWWMain"
+									 ConfigureIfExists="no">
+				<iis:WebAddress Id="DefaultWebSiteAddress" Port="80"/>
+			</iis:WebSite>
+		</Component>
+
+		<!--WiX AppPool-->
+		<Component Id="WixAppPoolComponent" Guid="35ba4317-f654-4b96-b3e0-605422362833"
+							 Directory="WWWMain" KeyPath="yes">
+			<iis:WebAppPool Id="WixAppPool" Name="Wix" Identity="networkService"
+											ManagedRuntimeVersion="v4.0" ManagedPipelineMode="integrated" />
+		</Component>
+
+		<!--WiX Application-->
+		<Component Id="WixIisAppComponent" Guid="7dfeeca1-7e6d-4d23-9e39-ea20af5c4412"
+							 Directory="WEBFILESDIR" KeyPath="yes">
+			<iis:WebVirtualDir Id="WebVirtualDir" Alias="WixWeb" Directory="WEBFILESDIR"
+												 WebSite="DefaultWebSite">
+				<iis:WebApplication Id="WebApplication" Name="WixWeb" WebAppPool="WixAppPool" />
+			</iis:WebVirtualDir>
+		</Component>
+	</Fragment>
+
+	<Fragment>
+		<!--Permissions-->
+		<!--Web Server Log Directory-->
+		<Component Id="WebServerLogDirectory" Guid="{21902043-2C86-4DDD-B5C8-4A904F1235CE}"
+							 Directory="WEBLOGDIR">
+			<CreateFolder>
+				<util:PermissionEx User="Everyone" CreateFile="yes" DeleteChild="yes" GenericWrite="yes" />
+			</CreateFolder>
+		</Component>
+	</Fragment>
+
+	<Fragment>
+		<ComponentGroup Id="WixWeb">
+			<ComponentRef Id="DefaultWebSiteComponent" />
+			<ComponentRef Id="WixAppPoolComponent" />
+			<ComponentRef Id="WixIisAppComponent"/>
+			<ComponentRef Id="WebServerLogDirectory"/>
+		</ComponentGroup>
+	</Fragment>
+</Wix>

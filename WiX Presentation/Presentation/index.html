@@ -1,0 +1,672 @@
+﻿<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Hello WiX - A Windows Installer XML Introduction</title>
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+
+				<section>
+					<h1>Hello W<span style="text-transform: lowercase">i</span>X!</h1>
+					<h3>Windows Installer XML</h3>
+					<p>
+						<small>Created by Shawn Riesterer / <a href="http://twitter.com/obishawn">@obishawn</a></small>
+					</p>
+				</section>
+
+				<section>
+					<h2>1<sup>st</sup> Rule in Installer Dev</h2>
+					<p>
+						<em class="double">Never</em> test the installer on your machine!
+					</p>
+				</section>
+				
+				<section>
+					<h2>2<sup>nd</sup> Rule in Installer Dev</h2>
+					<p>
+						<em class="double">NEVER</em> test the installer on your machine!
+					</p>
+				</section>
+			
+				<!-- What Is An Windows Installer? -->
+				<section>
+					<section>
+						<h2>The Anatomy of the "MSI" File</h2>
+						<p class="fragment">The MSI, or Windows (Microsoft) Installer file,
+						is a 'loosely relational database structured as a COM Structured Storage' <small><a target="_blank" href="http://en.wikipedia.org/wiki/Windows_Installer">source</a></small>
+						that can be read and modified using SQL query strings.</p>
+					</section>
+					<section>
+						<h2>Reading an MSI File</h2>
+						<pre><code>' Open the Installer file '
+Set MSIobj = CreateObject("WindowsInstaller.Installer")
+Set MSIdb = MSIobj.OpenDatabase(MSIfile, msiOpenDatabaseModeReadOnly)
+
+' Retrieve the list of properties and values '
+Set MSIView = MSIdb.OpenView("SELECT Property,Value FROM Property")
+MSIView.Execute()
+
+' Loop through records '
+Set MSIrecord = MSIView.Fetch
+propName = MSIrecords.StringData(1)
+propValue = MSIrecords.StringData(2)</code></pre>
+					</section>
+					<section>
+						<h2>Modifying an MSI File</h2>
+						<pre><code>' Open the Installer file '
+Set MSIobj = CreateObject("WindowsInstaller.Installer")
+Set MSIdb = MSIobj.OpenDatabase(MSIfile, msiOpenDatabaseModeTransact)
+
+' Modify the property and commit the change '
+Set MSIView = MSIdb.OpenView ( _
+  "UPDATE Property SET Value = '" & propValue & _
+  "' WHERE Property = '" & propName & "'")
+MSIView.Execute()
+MSIdb.Commit()</code></pre>
+					</section>
+				</section>
+					
+				<!-- What Is WiX -->
+				<section>
+					<section>
+						<h2>What is WiX?</h2>
+						<blockquote cite="http://wix.sourceforge.net/manual-wix3/main.htm">WiX is a set of tools that allows you to create Windows Installer-based deployment packages for your application.</blockquote>
+						
+						<ul class="quicklist">
+							<li>Candle</li>
+							<li>Light</li>
+							<li>Lit</li>
+							<li>Dark</li>
+							<li>Heat</li>
+							<li>Insignia</li>
+							<li>Melt</li>
+							<li>Torch</li>
+							<li>Smoke</li>
+							<li>Pyro</li>
+							<li>WixCop</li>
+							<li>WixUnit</li>
+							<li>Lux and Nit</li>
+						</ul>
+					</section>
+					
+					<section>
+					<h2>WiX Toolset</h2>
+					<p>The <a href="http://wixtoolset.org">WiX Toolset</a> installs the following new project types into Visual Studio</p>
+					<ul>
+						<li>Setup Project</li>
+						<li>Merge Module Project</li>
+						<li>Setup Library Project</li>
+						<li>Bootstrapper Project</li>
+						<li>C#/VB/C++ Custom Action Projects</li>
+					</ul>
+				</section>
+
+					<section>
+						<h2>Just a Note</h2>
+						<p>Visual Studio 2012 no longer supports the Visual Studio Installer Setup Project</p>
+					</section>
+				</section>
+								
+				<!-- Code First Look -->
+				<section>
+					<section>
+						<h2>Shut up and show me the code!</h2>
+						<pre><code><small>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;
+  &lt;Product Id=&quot;*&quot; Name=&quot;Hello WiX&quot; Language=&quot;1033&quot; Version=&quot;1.0.0.0&quot; 
+           Manufacturer=&quot;Acme Co.&quot; UpgradeCode=&quot;[Some Guid]&quot;&gt;
+    &lt;Package InstallerVersion=&quot;200&quot; Compressed=&quot;yes&quot; InstallScope=&quot;perMachine&quot; /&gt;
+
+    &lt;MajorUpgrade DowngradeErrorMessage=&quot;A newer version of [ProductName] is already installed.&quot; /&gt;
+    &lt;MediaTemplate EmbedCab=&quot;yes&quot; /&gt;
+
+    &lt;Feature Id=&quot;ProductFeature&quot; Title=&quot;HelloWixInstaller&quot; Level=&quot;1&quot;&gt;
+      &lt;ComponentGroupRef Id=&quot;ProductComponents&quot; /&gt;
+    &lt;/Feature&gt;
+  &lt;/Product&gt;
+
+  &lt;Fragment&gt;
+    &lt;Directory Id=&quot;TARGETDIR&quot; Name=&quot;SourceDir&quot;&gt;
+      &lt;Directory Id=&quot;ProgramFilesFolder&quot;&gt;
+        &lt;Directory Id=&quot;INSTALLFOLDER&quot; Name=&quot;HelloWixInstaller&quot; /&gt;
+      &lt;/Directory&gt;
+    &lt;/Directory&gt;
+  &lt;/Fragment&gt;
+
+  &lt;Fragment&gt;
+    &lt;ComponentGroup Id=&quot;ProductComponents&quot; Directory=&quot;INSTALLFOLDER&quot;&gt;
+      &lt;Component Id=&quot;ProductComponent&quot;&gt;
+        &lt;!-- TODO: Insert files, registry keys, and other resources here. --&gt;
+      &lt;/Component&gt;
+    &lt;/ComponentGroup&gt;
+  &lt;/Fragment&gt;
+&lt;/Wix&gt;</small></code></pre>
+					</section>
+				
+					<section>
+						<h3>Define Your Product</h3>
+						<pre><code>&lt;Product <span class="fragment">Id=&quot;*&quot; UpgradeCode=&quot;[Some Guid]&quot;</span> <span class="fragment">Version=&quot;1.0.0.0&quot;</span>
+    <span class="fragment">Name=&quot;Hello WiX&quot; Manufacturer=&quot;Acme Co.&quot; Language=&quot;1033&quot;</span>&gt;</code></pre>
+					</section>		
+
+					<section>
+						<h3>The Necessities</h3>
+						<pre><code>&lt;Package InstallerVersion=&quot;200&quot; Compressed=&quot;yes&quot;
+  InstallScope=&quot;perMachine&quot; /&gt;
+
+&lt;MajorUpgrade DowngradeErrorMessage
+  =&quot;A newer version of [ProductName] is already installed.&quot; /&gt;
+
+&lt;MediaTemplate <span class="fragment">EmbedCab=&quot;yes&quot; </span>/&gt;</code></pre>
+					</section>
+				
+					<section>
+						<h3>It's All About the Features</h3>
+						<pre><code>&lt;Feature Id=&quot;ProductFeature&quot; Title=&quot;HelloWixInstaller&quot; Level=&quot;1&quot;&gt;
+  &lt;ComponentGroupRef Id=&quot;ProductComponents&quot; /&gt;
+&lt;/Feature&gt;
+</code></pre>
+					</section>
+				
+					<section>
+						<h3>A Directory For Everything, And Everything In It's Directory</h3>
+						<pre><code>&lt;Directory Id=&quot;TARGETDIR&quot; Name=&quot;SourceDir&quot;&gt;
+  &lt;Directory Id=&quot;ProgramFilesFolder&quot;&gt;
+    &lt;Directory Id=&quot;INSTALLFOLDER&quot; Name=&quot;HelloWixInstaller&quot; /&gt;
+  &lt;/Directory&gt;
+&lt;/Directory&gt;</code></pre>
+					</section>
+					
+					<section>
+						<h3>The Key with Components Are Components Are Key</h3>
+						<pre><code>&lt;ComponentGroup Id=&quot;ProductComponents&quot; Directory=&quot;INSTALLFOLDER&quot;&gt;
+  &lt;Component Id=&quot;ProductComponent&quot;&gt;
+    &lt;!-- TODO: Insert files, registry keys, 
+      and other resources here. --&gt;
+  &lt;/Component&gt;
+&lt;/ComponentGroup&gt;</code></pre>
+					</section>
+					
+					<section>
+						<h3>Life's Like a Box of Fragments</h3>
+						<pre><code>&lt;Product&gt;...&lt;/Product&gt;
+
+&lt;Fragment&gt;...&lt;/Fragment&gt;
+
+&lt;Fragment&gt;...&lt;/Fragment&gt;</code></pre>
+					</section>
+				</section>
+				
+				<!--Let's Get Started-->
+				<section>
+					<h2>Let's Get Started</h2>
+				</section>
+				
+				<!--Files-->
+				<section>
+					<section>
+						<h2>Installing Files</h2>
+						<ol>
+							<li>Define directory structure</li>
+							<li>Add project reference</li>
+							<li><strong>For each</strong> file output from your project
+								<ol>
+									<li>Add the following XML to the appropriate directory
+										<pre><code>&lt;Component Id=&quot;[Some UID]&quot; Guid=&quot;[Some GUID]&quot;&gt;
+  &lt;File Id=&quot;[Some UID]&quot; KeyPath=&quot;yes&quot;
+    Source=&quot;$(var.HelloWix.TargetDir)\[File]&quot; /&gt;
+&lt;/Component&gt;</code></pre>
+									</li>
+								</ol>
+							</li>
+						</ol>
+						<div class="fragment">
+							<p>Or...</p>
+							<ol>
+								<li>Define directory structure</li>
+								<li>Add project reference</li>
+								<li>Use heat to build your components and files fragment automatically</li>
+							</ol>
+						</div>
+						<div class="fragment">
+							<p>Let's do the latter.</p>
+						</div>
+					</section>
+
+					<section>
+						<h2>Is it getting hot in here?</h2>
+						<p>Pre-build Event Command Line</p>
+						<pre><code>"$(WIX)bin\heat.exe"
+  dir "$(SolutionDir)HelloWix\bin\$(ConfigurationName)"
+  -cg ClientFiles -gg -scom -sreg -sfrag -srd -dr CLIENTFILESDIR 
+  -var var.HelloWix.TargetDir
+  -out "$(ProjectDir)FilesFragments\ClientFilesFragment.wxs"</code></pre>
+					
+						<p>Output</p>
+						<pre><code><small>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;
+  &lt;Fragment&gt;
+    &lt;DirectoryRef Id=&quot;CLIENTFILESDIR&quot;&gt;
+      &lt;Component Id=&quot;cmp67CF33E4D62CF57DA230CE372A159466&quot;
+        Guid=&quot;{AC718542-58BB-4636-97D6-B29B4DB67E37}&quot;&gt;
+        &lt;File Id=&quot;fil96427528C7D2AC027B7B45AC16D23D4B&quot; 
+          KeyPath=&quot;yes&quot; Source=&quot;$(var.HelloWix.TargetDir)\HelloWix.exe&quot; /&gt;
+      &lt;/Component&gt;
+      ...
+    &lt;/DirectoryRef&gt;
+  &lt;/Fragment&gt;
+  &lt;Fragment&gt;
+    &lt;ComponentGroup Id=&quot;ClientFiles&quot;&gt;
+      &lt;ComponentRef Id=&quot;cmp67CF33E4D62CF57DA230CE372A159466&quot; /&gt;
+      ...
+    &lt;/ComponentGroup&gt;
+  &lt;/Fragment&gt;
+&lt;/Wix&gt;</small></code></pre>
+					</section>
+
+					<section>
+						<h3>Featuring: Client Files!</h3>
+						<pre><code>&lt;Feature Id=&quot;Client&quot; Title=&quot;Configuration Tools&quot; Level=&quot;1&quot;&gt;
+  &lt;ComponentGroupRef Id=&quot;ClientFiles&quot;/&gt;
+&lt;/Feature&gt;</code></pre>
+						<!--&lt;Feature Id=&quot;Web&quot; Title=&quot;Web Server&quot; Level=&quot;1&quot;&gt;
+							&lt;ComponentGroupRef Id=&quot;WebFiles&quot; /&gt;
+							&lt;/Feature&gt;-->
+					</section>
+				</section>
+				
+				<!-- Installing a Service -->
+				<section>
+					<section>
+						<h2>Build Me a Service</h2>
+						<ol>
+							<li>Define directory structure</li>
+							<li>Add project reference</li>
+							<li>Generate files fragment using heat</li>
+							<li>Transform the files fragment to exclude the service executable</li>
+							<li>Add a reference to "%ProgramFiles(x86)%\WiX Toolset v3.8\bin\WixUtilExtension.dll"</li>
+							<li>Add the namespace reference xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"</li>
+							<li>Define the service install</li>
+						</ol>
+					</section>
+
+					<section>
+						<h3>Pre-build Event Command Line</h3>
+						<pre><code>"$(WIX)bin\heat.exe" 
+  dir "$(SolutionDir)HelloWixService\bin\$(ConfigurationName)" 
+  -cg ServiceFiles -gg -scom -sreg -sfrag -srd -dr SERVICEFILESDIR
+  -var var.HelloWixService.TargetDir
+  <em>-t "$(ProjectDir)HelloWixServiceFiles.xslt"</em>
+  -out "$(ProjectDir)FilesFragments\ServiceFilesFragment.wxs"</code></pre>
+						
+						<pre><code>&lt;!-- Copy all attributes and elements to the output. --&gt;
+&lt;xsl:template match=&quot;@*|*&quot;&gt;
+  &lt;xsl:copy&gt;
+    &lt;xsl:apply-templates select=&quot;@*|node()&quot;/&gt;
+  &lt;/xsl:copy&gt;
+&lt;/xsl:template&gt;
+
+&lt;xsl:key name=&quot;FileId&quot; match=&#39;//wix:Component[wix:File[@Source=&quot;$(var.HelloWixService.TargetDir)\HelloWixService.exe&quot;]]&#39; use=&quot;@Id&quot;
+  /&gt;
+
+&lt;!-- Exclude Service Executable --&gt;
+&lt;xsl:template match=&#39;//wix:Component[wix:File[@Source=&quot;$(var.HelloWixService.TargetDir)\HelloWixService.exe&quot;]]&#39; /&gt;
+
+&lt;!--Exclude Service Executable Component from ComponentGroup--&gt;
+&lt;xsl:template match=&quot;wix:ComponentRef[key(&#39;FileId&#39;,@Id)]&quot; /&gt;</code></pre>
+					</section>
+				
+					<section>
+						<h3>Service Component</h3>
+						<pre><code><small>&lt;Component Id=&quot;WixService&quot; Guid=&quot;[Some Guid]&quot; Directory=&quot;SERVICEFILESDIR&quot;&gt;
+  &lt;!--Ensure the folder for the files is created--&gt;
+  &lt;CreateFolder /&gt;
+
+  &lt;!--Specify the file being installed as the executable by declaring this as KeyPath--&gt;
+  &lt;File Id=&quot;ServiceExecutable&quot; Name=&quot;$(var.HelloWixService.TargetFileName)&quot;
+    Source=&quot;$(var.HelloWixService.TargetPath)&quot; DiskId=&quot;1&quot; Vital=&quot;yes&quot; KeyPath=&quot;yes&quot;/&gt;
+
+  &lt;!--Specify the service install parameters--&gt;
+  &lt;ServiceInstall Id=&quot;ServiceInstaller&quot; Type=&quot;ownProcess&quot; Interactive=&quot;no&quot;
+    Name=&quot;hellowix&quot; DisplayName=&quot;Hello WiX&quot; Start=&quot;auto&quot; Account=&quot;LocalSystem&quot; 
+    Description=&quot;Describes the Hello WiX service.&quot; ErrorControl=&quot;normal&quot; Vital=&quot;yes&quot;&gt;
+    ...
+  &lt;/ServiceInstall&gt;
+
+  &lt;!--Start/Stop the service on Un/Install--&gt;
+  &lt;ServiceControl Id=&quot;StarStervice&quot; Start=&quot;install&quot; Stop=&quot;both&quot; Remove=&quot;both&quot;
+    Name=&quot;hellowix&quot; Wait=&quot;no&quot; /&gt;
+&lt;/Component&gt;</small></code></pre>
+					</section>
+					
+					<section>
+						<h3>A few optional details for the Service Component</h3>
+						<pre><code><small>&lt;ServiceInstall ...&gt;
+
+  &lt;!--Configure how the service will behave--&gt;
+  &lt;util:ServiceConfig FirstFailureActionType=&quot;restart&quot; 
+    SecondFailureActionType=&quot;restart&quot; ThirdFailureActionType=&quot;restart&quot;
+    RestartServiceDelayInSeconds=&quot;20&quot; /&gt;
+    
+  &lt;!--Grant &quot;Network Service&quot; permissions to start and stop this service--&gt;
+  &lt;util:PermissionEx User=&quot;Network Service&quot; ServiceStart=&quot;yes&quot; ServiceStop=&quot;yes&quot;/&gt;
+
+  &lt;!--Specify any service dependencies--&gt;
+  &lt;ServiceDependency Id=&quot;MSSQL$SQLEXPRESS&quot;/&gt;
+&lt;/ServiceInstall&gt;</small></code></pre>
+					</section>
+					
+					<section>
+						<h3>Featuring: WiX Service!</h3>
+						<pre><code>&lt;Feature Id=&quot;Service&quot; Title=&quot;Server&quot; Level=&quot;1&quot;&gt;
+  &lt;ComponentGroupRef Id=&quot;ServiceFiles&quot;/&gt;
+  &lt;ComponentGroupRef Id=&quot;HelloWixService&quot;/&gt;
+&lt;/Feature&gt;</code></pre>
+					</section>
+				</section>
+				
+				<!-- Web -->
+				<section>
+					<section>
+						<h2>Back this gravy train up! What about the webz?</h2>
+						<ol>
+							<li>Define directory structure</li>
+							<li>Add project reference</li>
+							<li>Package web using msbuild</li>
+							<li>Generate files fragment using heat</li>
+							<li>Add a reference to "%ProgramFiles(x86)%\WiX Toolset v3.8\bin\WixIisExtension.dll"</li>
+							<li>Add the namespace reference xmlns:iis="http://schemas.microsoft.com/wix/IIsExtension"</li>
+							<li>Create an application pool</li>
+							<li>Create a website</li>
+							<li>Create an application</li>
+						</ol>
+					</section>
+					
+					<section>
+						<h3>Admiral!  There be Webz here!</h3>
+						<p>Preprocessor Variable</p>
+						<pre><code>HelloWixWebPackageDir=..\HelloWixWeb\obj\Release\Package\PackageTmp;</code></pre>
+						<p>Pre-build Event Command Line</p>
+						<pre><code>"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\msbuild.exe" 
+  "$(SolutionDir)HelloWixWeb\HelloWixWeb.csproj"
+  /t:Build;Package /p:Configuration=$(ConfigurationName)
+					
+							
+"$(WIX)bin\heat.exe"
+  <em>dir "$(SolutionDir)HelloWixWeb\obj\$(ConfigurationName)\Package\PackageTmp"</em>
+  -cg WebFiles -gg -scom -sreg -sfrag -srd -dr WEBFILESDIR
+  -var var.HelloWixWebPackageDir
+  -out "$(ProjectDir)FilesFragments\WebFilesFragment.wxs"
+					     </code></pre>
+					</section>
+					
+					<section>
+						<h3>Admiral!  More Webz!</h3>
+						<pre><code>&lt;!--WiX AppPool--&gt;
+&lt;Component Id=&quot;WixAppPoolComponent&quot; Guid=&quot;[Some Guid]&quot; 
+  Directory=&quot;WWWMain&quot; KeyPath=&quot;yes&quot;&gt;
+
+  &lt;iis:WebAppPool Id=&quot;WixAppPool&quot; Name=&quot;WiX&quot;
+    Identity=&quot;networkService&quot; ManagedRuntimeVersion=&quot;v4.0&quot;
+    ManagedPipelineMode=&quot;integrated&quot; /&gt;
+
+&lt;/Component&gt;</code></pre>
+					</section>
+					
+					<section>
+						<h3>Admiral!  We're up to our necks in webz!</h3>
+						<pre><code>&lt;!--Default Web Site Reference--&gt;
+&lt;Component Id=&quot;DefaultWebSiteComponent&quot; Guid=&quot;[Some Guid]&quot;
+  Directory=&quot;WWWMain&quot; KeyPath=&quot;yes&quot; <em>Permanent=&quot;yes&quot;</em>&gt;
+
+  &lt;iis:WebSite Id=&quot;DefaultWebSite&quot; Description=&quot;Default Web Site&quot; 
+    Directory=&quot;WWWMain&quot; <em>ConfigureIfExists=&quot;no&quot;</em>&gt;
+
+    &lt;iis:WebAddress Id=&quot;DefaultWebSiteAddress&quot; Port=&quot;80&quot;/&gt;
+
+  &lt;/iis:WebSite&gt;
+
+&lt;/Component&gt;</code></pre>
+					</section>
+					
+					<section>
+						<h3>Admiral! Spider-Man Would Love This!</h3>
+						<pre><code>&lt;!--WiX Application--&gt;
+&lt;Component Id=&quot;WixIisAppComponent&quot; Guid=&quot;[Some Guid]&quot;
+  Directory=&quot;WEBFILESDIR&quot; KeyPath=&quot;yes&quot;&gt;
+
+  &lt;iis:WebVirtualDir Id=&quot;WebVirtualDir&quot; Alias=&quot;WixWeb&quot;
+    Directory=&quot;WEBFILESDIR&quot; WebSite=&quot;DefaultWebSite&quot;&gt;
+
+    &lt;iis:WebApplication Id=&quot;WebApplication&quot; Name=&quot;WiXWeb&quot;
+      WebAppPool=&quot;WixAppPool&quot; /&gt;
+
+  &lt;/iis:WebVirtualDir&gt;
+
+&lt;/Component&gt;</code></pre>
+					</section>
+				</section>
+				
+				<!-- Custom Actions -->
+				<section>
+					<section>
+						<h2>Customize Those Actions!</h2>
+						<pre><code>&lt;Product ...&gt;
+  ...
+  &lt;InstallExecuteSequence&gt;
+    &lt;Custom Action=&quot;DatabaseDeploy&quot; After=&quot;InstallFiles&quot;&gt;
+      REINSTALL Or NOT Installed&lt;/Custom&gt;
+  &lt;/InstallExecuteSequence&gt;
+&lt;/Product&gt;</code></pre>
+						<pre><code>&lt;Fragment&gt;
+  &lt;!--Deploy Database--&gt;
+  &lt;CustomAction Id=&quot;DatabaseDeploy&quot; Directory=&quot;DATABASEFILESDIR&quot;
+    Execute=&quot;deferred&quot; Return=&quot;check&quot; Impersonate=&quot;no&quot;
+    ExeCommand=&quot;[DATABASEFILESDIR]installer.bat&quot; /&gt;
+&lt;/Fragment&gt;</code></pre>
+					</section>
+					
+					<section>
+						<h2>System Settings</h2>
+						<pre><code>&lt;Custom Action=&quot;MakeSomeSystemChange&quot; Before=&quot;InstallFinalize&quot;&gt;
+  &lt;![CDATA[(REINSTALL Or NOT Installed)]]&gt;&lt;/Custom&gt;
+
+&lt;Custom Action=&quot;RevertSystemChange&quot; After=&quot;InstallInitialize&quot;&gt;
+  &lt;![CDATA[REMOVE=&quot;ALL&quot;]]&gt;&lt;/Custom&gt;</code></pre>
+					</section>
+
+					<section>
+						<h2>Feature-Dependent Custom Actions</h2>
+						<pre><code>&lt;Custom Action=&quot;SomeAction&quot; Before=&quot;InstallFinalize&quot;&gt;
+  &lt;![CDATA[&amp;ManagementTools=3]]&gt;&lt;/Custom&gt;</code></pre>
+					</section>
+				</section>
+				
+				<!-- Permissions -->
+				<section>
+					<h2>Go ask your mother for permission</h2>
+					<pre><code><small>&lt;Fragment&gt;
+  &lt;!--Permissions--&gt;
+  &lt;!--Web Server Log Directory--&gt;
+  &lt;Component Id=&quot;WebServerLogDirectory&quot; Guid=&quot;[Some Guid]&quot; Directory=&quot;WEBLOGDIR&quot;&gt;
+    &lt;CreateFolder&gt;
+      &lt;util:PermissionEx User=&quot;Everyone&quot; CreateFile=&quot;yes&quot; DeleteChild=&quot;yes&quot;
+        GenericWrite=&quot;yes&quot; /&gt;
+    &lt;/CreateFolder&gt;
+  &lt;/Component&gt;
+&lt;/Fragment&gt;</small></code></pre>
+				</section>
+				
+				<!-- Shortcuts -->
+				<section>
+					<h2>Shortcuts - Sounds like a hairdo</h2>
+					<pre><code>&lt;!--Desktop Folder--&gt;
+&lt;DirectoryRef Id=&quot;DesktopFolder&quot;&gt;
+  &lt;Component Id=&quot;ClientDesktopShortcut&quot; Guid=&quot;[Some Guid]&quot;&gt;
+    &lt;Shortcut Id=&quot;DesktopShortcut&quot;
+                Name=&quot;Hello WiX&quot;
+                Description=&quot;Lorem ipsum&quot;
+                Target=&quot;[CLIENTFILESDIR]HelloWiX.exe&quot;
+                WorkingDirectory=&quot;CLIENTFILESDIR&quot;/&gt;
+    &lt;RegistryValue Root=&quot;HKCU&quot; Key=&quot;Software\AcmeCo\HelloWiX&quot;
+      Name=&quot;DesktopSC&quot; Type=&quot;integer&quot; Value=&quot;1&quot; KeyPath=&quot;yes&quot;/&gt;
+  &lt;/Component&gt;
+&lt;/DirectoryRef&gt;</code></pre>
+				</section>
+
+				<!-- Installation Conditions -->
+				<section>
+					<h2>Installation Conditions</h2>
+					<pre><code>&lt;Condition Message=&quot;This application is only supported on Windows Vista, Windows Server 2008, or higher.&quot;&gt;
+  &lt;![CDATA[Installed OR (VersionNT &gt;= 600)]]&gt;
+&lt;/Condition&gt;
+&lt;PropertyRef Id=&quot;NETFRAMEWORK45&quot;/&gt;
+&lt;Condition Message=&quot;This application requires .NET Framework 4.5. Please install the .NET Framework then run this installer again.&quot;&gt;
+  &lt;![CDATA[Installed OR NETFRAMEWORK45]]&gt;
+&lt;/Condition&gt;</code></pre>
+				</section>
+			
+				<!-- Merge Modules -->
+				<section>
+					<section>
+						<h2>Merge Modules</h2>
+						<p>
+							Merge modules are separate binaries that contain components that can be referenced and combined
+							into installers or other merge modules.
+						</p>
+						<p>
+							Merge modules do not contain features but are instead referenced within features inside of the
+							installer definition.
+						</p>
+					</section>
+					<section>
+						<h2>May the Merge Be With You</h2>
+						<pre><code>&lt;Feature Id=&quot;CoreFeature&quot; Title=&quot;Core Components&quot;&gt;
+  &lt;MergeRef Id=&quot;Services&quot;/&gt;
+  &lt;MergeRef Id=&quot;Utilities&quot;/&gt;
+  ...</code></pre>
+						<pre><code>&lt;Directory Id=&quot;INSTALLFOLDER&quot; Name=&quot;Acme Co&quot;&gt;
+  &lt;Merge Id=&#39;Services&#39; Language=&#39;1033&#39;
+    src=&#39;$(var.HelloWixServicesMsm.TargetPath)&#39; DiskId=&#39;1&#39; /&gt;
+					
+  &lt;Directory Id=&quot;UtilitiesFolder&quot; Name=&quot;Utilities&quot;&gt;
+    &lt;Merge Id=&#39;Utilities&#39; Language=&#39;1033&#39;
+      src=&#39;$(var.HelloWixUtilitiesMsm.TargetPath)&#39; DiskId=&#39;1&#39; /&gt;
+  &lt;/Directory&gt;
+  ...</code></pre>
+					</section>
+				</section>
+				
+				<!-- Misc -->
+				<section>
+					<section>
+						<h2>A Few Miscellaneous Items</h2>
+					</section>
+
+					<section>
+						<h2>Installer Icon</h2>
+						<pre><code>&lt;Icon Id="icon.ico" SourceFile="icon.ico"/&gt;</code></pre>
+					</section>
+
+					<section>
+						<h2>Build Integration</h2>
+						<pre><code>&lt;!-- Set version based on build_number env. variable. --&gt;
+&lt;?ifdef env.BUILD_NUMBER ?&gt;
+  &lt;?define PRODUCTVERSION=&quot;$(env.BUILD_NUMBER)&quot;?&gt;
+&lt;?else?&gt;
+  &lt;?define PRODUCTVERSION=&quot;4.5.0.0&quot;?&gt;
+&lt;?endif?&gt;</code></pre>
+						<pre><code>&lt;Product Id=&quot;*&quot; Name=&quot;Hello Wix&quot; Language=&quot;1033&quot;
+  <em>Version=&quot;$(var.PRODUCTVERSION)&quot;</em>
+  Manufacturer=&quot;Acme Co.&quot; UpgradeCode=&quot;[Some Guid]&quot;&gt;</code></pre>
+						<pre><code>msbuild /p:BUILD_NUMBER=%build.number% ...</code></pre>
+					</section>
+
+					<section>
+						<h2>Force C:\ Drive</h2>
+						<p>The ROOTDRIVE property specifies the default drive for the destination directory of the installation.</p>
+						<p>During an administrative installation, ROOTDRIVE defaults to the first connected network drive it finds that can be written to. 
+							If it is not an administrative installation, or if the installer can find no network drives, <em>ROOTDRIVE defaults to the local drive that can be written to having the most free space</em>.</p>
+						<pre><code>&lt;Property Id="ROOTDRIVE" Value="C:\" /&gt;</code></pre>
+					</section>
+				</section>
+
+				<section>
+					<h2>References</h2>
+					<ul>
+						<li>WiX Toolset<br/><small><a target="_blank" href="http://wixtoolset.org/">http://wixtoolset.org/</a></small></li>
+						<li>Windows Installer Documentation<br/><small><a target="_blank" href="http://msdn.microsoft.com/en-us/library/cc185688(v=vs.85).aspx">http://msdn.microsoft.com/en-us/library/cc185688(v=vs.85).aspx</a></small></li>
+						<li>Windows Installer object<br /><small><a target="_blank" href="http://msdn.microsoft.com/en-us/library/aa369432(v=vs.85).aspx">http://msdn.microsoft.com/en-us/library/aa369432(v=vs.85).aspx</a></small></li>
+					</ul>
+				</section>
+				
+				<section>
+					<h2>The End</h2>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: false,
+				center: true,
+				loop: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+				],
+
+				keyboard: {
+					37: 'prev', // go to the previous slide when the left arrow key is pressed
+					39: 'next' // go to the next slide when the right arrow key is pressed
+				}
+			});
+
+		</script>
+
+	</body>
+</html>

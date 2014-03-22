@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+		<!-- Set version based on build_number env. variable. -->
+		<?ifdef env.BUILD_NUMBER ?>
+			<?define PRODUCTVERSION="$(env.BUILD_NUMBER)"?>
+		<?else?>
+			<?define PRODUCTVERSION="2.0.0.0"?>
+		<?endif?>
+	
+		<?define Manufacturer = "Acme Co." ?>
+		<?define ProductName = "Hello Wix" ?>
+		
+		<Product Id="*" Name="$(var.ProductName)" Language="1033" Version="$(var.PRODUCTVERSION)"
+						 Manufacturer="$(var.Manufacturer)" UpgradeCode="0a625ecb-a472-41b2-a91c-686093319379">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+			
+		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+		<MediaTemplate EmbedCab="yes" />
+
+		<!-- Requirements -->
+			
+		<Condition Message="This application is only supported on Windows Vista, Windows Server 2008, or higher.">
+			<![CDATA[Installed OR (VersionNT >= 600)]]>
+		</Condition>
+
+		<PropertyRef Id="NETFRAMEWORK45"/>
+		<Condition Message="This application requires .NET Framework 4.5. Please install the .NET Framework then run this installer again.">
+				<![CDATA[Installed OR NETFRAMEWORK45]]>
+		</Condition>
+
+		<!-- Features -->
+		<Feature Id="Client" Title="Configuration Tools" Level="1">
+			<ComponentGroupRef Id="ClientFiles"/>
+			<ComponentRef Id="ClientDesktopShortcut"/>
+		</Feature>
+		<Feature Id="Service" Title="Server" Level ="1">
+			<ComponentGroupRef Id="ServiceFiles" />
+			<ComponentRef Id="HelloWixService" />
+		</Feature>
+		<Feature Id="Web" Title="Web Server" Level="1">
+			<ComponentGroupRef Id="WebFiles" />
+			<ComponentGroupRef Id="WixWeb"/>
+		</Feature>
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<!--Desktop-->
+			<Directory Id="DesktopFolder" Name="Desktop" />
+			
+			<!--inetput-->
+			<Directory Id="IISMain" Name="inetpub">
+				<Directory Id="WWWMain" Name="wwwroot" />
+				<Directory Id="WEBFILESDIR" Name="WiX Web Server">
+					<Directory Id="WEBLOGDIR" Name="Logs" />
+				</Directory>
+			</Directory>
+			
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="MANUFACTURERFOLDER" Name="$(var.Manufacturer)">
+					<Directory Id="INSTALLFOLDER" Name="$(var.ProductName)">
+						<Directory Id="CLIENTFILESDIR" Name="Client Tools" />
+						<Directory Id="SERVICEFILESDIR" Name="Server" />
+					</Directory>
+				</Directory>
+			</Directory>
+		</Directory>
+	</Fragment>
+
+	<Fragment>
+		<!--Desktop Folder-->
+		<DirectoryRef Id="DesktopFolder">
+			<Component Id="ClientDesktopShortcut" Guid="{A58F1DE8-C0C5-4F85-AC31-536FF68CB514}">
+				<Shortcut Id="DesktopShortcut"
+										Name="Hello WiX"
+										Description="Lorem Ipsum"
+										Target="[CLIENTFILESDIR]HelloWiX.exe"
+										WorkingDirectory="CLIENTFILESDIR"/>
+				<RegistryValue Root="HKCU" Key="Software\AcmeCo\HelloWiX" Name="DesktopSC" Type="integer"
+											 Value="1" KeyPath="yes"/>
+			</Component>
+		</DirectoryRef>
+	</Fragment>
+</Wix>

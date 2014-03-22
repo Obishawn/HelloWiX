@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>3.6</ProductVersion>
+    <ProjectGuid>29fbed2c-551d-4720-8c69-2823767d8b0e</ProjectGuid>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputName>Hello WiX</OutputName>
+    <OutputType>Package</OutputType>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <DefineConstants>Debug;HelloWixWebPackageDir=..\HelloWixWeb\obj\Debug\Package\PackageTmp;</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <DefineConstants>HelloWixWebPackageDir=..\HelloWixWeb\obj\Release\Package\PackageTmp;</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Service.wxs" />
+    <Compile Include="Web.wxs" />
+    <Compile Include="FilesFragments\ClientFilesFragment.wxs" />
+    <Compile Include="FilesFragments\ServiceFilesFragment.wxs" />
+    <Compile Include="FilesFragments\WebFilesFragment.wxs" />
+    <Compile Include="Product.wxs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HelloWixService\HelloWixService.csproj">
+      <Name>HelloWixService</Name>
+      <Project>{10ddcbb5-7812-45d5-a791-256586a34781}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\HelloWixWeb\HelloWixWeb.csproj">
+      <Name>HelloWixWeb</Name>
+      <Project>{fc6bdbac-7f9c-4d42-89a9-67959cbc50da}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\HelloWix\HelloWix.csproj">
+      <Name>HelloWix</Name>
+      <Project>{f6b5f5bd-7d51-4f7e-b8dd-e08035cc03af}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <WixExtension Include="WixNetFxExtension">
+      <HintPath>$(WixExtDir)\WixNetFxExtension.dll</HintPath>
+      <Name>WixNetFxExtension</Name>
+    </WixExtension>
+    <WixExtension Include="WixIIsExtension">
+      <HintPath>$(WixExtDir)\WixIIsExtension.dll</HintPath>
+      <Name>WixIIsExtension</Name>
+    </WixExtension>
+    <WixExtension Include="WixUtilExtension">
+      <HintPath>$(WixExtDir)\WixUtilExtension.dll</HintPath>
+      <Name>WixUtilExtension</Name>
+    </WixExtension>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="HelloWixServiceFiles.xslt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="FilesFragments\" />
+  </ItemGroup>
+  <Import Project="$(WixTargetsPath)" />
+  <PropertyGroup>
+    <PreBuildEvent>C:\Windows\Microsoft.NET\Framework64\v4.0.30319\msbuild.exe "$(SolutionDir)HelloWixWeb\HelloWixWeb.csproj" /t:Build%3bPackage /p:Configuration=$(ConfigurationName)
+
+"$(WIX)bin\heat.exe" dir "$(SolutionDir)HelloWix\bin\$(ConfigurationName)" -cg ClientFiles -gg -scom -sreg -sfrag -srd -dr CLIENTFILESDIR -var var.HelloWix.TargetDir -out "$(ProjectDir)FilesFragments\ClientFilesFragment.wxs"
+"$(WIX)bin\heat.exe" dir "$(SolutionDir)HelloWixWeb\obj\$(ConfigurationName)\Package\PackageTmp" -cg WebFiles -gg -scom -sreg -sfrag -srd -dr WEBFILESDIR -var var.HelloWixWebPackageDir -out "$(ProjectDir)FilesFragments\WebFilesFragment.wxs"
+"$(WIX)bin\heat.exe" dir "$(SolutionDir)HelloWixService\bin\$(ConfigurationName)" -cg ServiceFiles -gg -scom -sreg -sfrag -srd -dr SERVICEFILESDIR -var var.HelloWixService.TargetDir -t "$(ProjectDir)HelloWixServiceFiles.xslt" -out "$(ProjectDir)FilesFragments\ServiceFilesFragment.wxs"</PreBuildEvent>
+  </PropertyGroup>
+  <!--
+	To modify your build process, add your task inside one of the targets below and uncomment it.
+	Other similar extension points exist, see Wix.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>
